@@ -2,11 +2,29 @@ import React, { useContext } from "react";
 import "./Cart.css";
 import { StoreContext } from "../../Context/StoreContext";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const Cart = () => {
-  const { cartItems, food_list, removeFromCart, getTotalCartAmount, url } =
-    useContext(StoreContext);
+  const {
+    cartItems,
+    food_list,
+    getTotalCartAmount,
+    url,
+    token,
+    // removeFromCart,
+  } = useContext(StoreContext);
+  // console.log(cartItems);
+
   const navigate = useNavigate();
+
+  const proceedToCheckout = () => {
+    if (token) {
+      navigate("/order");
+    } else {
+      toast.error("Please Login");
+    }
+  };
+
   return (
     <div className="cart">
       <div className="cart-items">
@@ -29,9 +47,7 @@ const Cart = () => {
                 <p>${item.price}</p>
                 <p>{cartItems[item._id]}</p>
                 <p>${item.price * cartItems[item._id]}</p>
-                <p onClick={() => removeFromCart(item._id)} className="cross">
-                  x
-                </p>
+                <p className="cross">x</p>
               </div>
             );
           }
@@ -59,9 +75,7 @@ const Cart = () => {
               </p>
             </div>
           </div>
-          <button onClick={() => navigate("/order")}>
-            PROCEED TO CHECKOUT
-          </button>
+          <button onClick={proceedToCheckout}>PROCEED TO CHECKOUT</button>
         </div>
         <div className="cart-promocode">
           <div>

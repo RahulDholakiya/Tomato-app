@@ -2,8 +2,8 @@
 import React, { useContext, useEffect, useState } from "react";
 import "./PlaceOrder.css";
 import { StoreContext } from "../../Context/StoreContext";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const PlaceOrder = () => {
   const { getTotalCartAmount, token, food_list, cartItems, url } =
@@ -39,33 +39,63 @@ const PlaceOrder = () => {
 
   const placeOrder = async (event) => {
     event.preventDefault();
+
+    if (!window.Razorpay) {
+      alert(
+        "Razorpay SDK not loaded. Make sure to include the script in your HTML."
+      );
+      return;
+    }
+
     let orderItems = [];
-    food_list.map((item) => {
+    food_list.forEach((item) => {
       if (cartItems[item._id] > 0) {
-        let itemInfo = item;
-        itemInfo["quantity"] = cartItems[item._id];
+        let itemInfo = { ...item, quantity: cartItems[item._id] };
         orderItems.push(itemInfo);
       }
-      return null;
     });
 
     let orderData = {
       address: data,
       items: orderItems,
-      amount: getTotalCartAmount() + 2,
+      amount: getTotalCartAmount() + 100,
     };
 
-    let response = await axios.post(url + "/api/order/place", orderData, {
-      headers: { token },
+    const orderDataAmount = orderData.amount;
+
+    const {
+      data: { key },
+    } = await axios.get("http://www.localhost:4000/api/getkey");
+    
+    const {
+      data: { order },
+    } = await axios.post(url + "/api/payment/checkout", {
+      orderDataAmount,
     });
 
-    if (response.data.success) {
-      console.log(response.data.success);
-      const { session_url } = response.data;
-      window.location.replace(session_url);
-    } else {
-      alert("Error");
-    }
+    const options = {
+      key: key,
+      amount: orderDataAmount,
+      currency: "INR",
+      name: "Tomato",
+      description: "Tutorial of RazorPay",
+      image: "https://avatars.githubusercontent.com/u/25058652?v=4",
+      order_id: order?.id,
+      callback_url: url + "/api/payment/paymentverification",
+      prefill: {
+        name: "Gaurav Kumar",
+        email: "gaurav.kumar@example.com",
+        contact: "9999999999",
+      },
+      notes: {
+        address: "Razorpay Corporate Office",
+      },
+      theme: {
+        color: "#121212",
+      },
+    };
+    const razor = new window.Razorpay(options);
+    razor.open();
   };
 
   return (
