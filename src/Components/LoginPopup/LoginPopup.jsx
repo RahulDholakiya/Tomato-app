@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./LoginPopup.css";
 import { assets } from "../../Assets/assets";
 import { useContext } from "react";
 import { StoreContext } from "../../Context/StoreContext";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const LoginPopup = ({ setShowLogin }) => {
   const [currState, setCurrState] = useState("Login");
@@ -14,6 +15,15 @@ const LoginPopup = ({ setShowLogin }) => {
   });
 
   const { url, setToken } = useContext(StoreContext);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      setToken(token);
+    }
+  }, [setToken]);
 
   const onChangeHandler = (event) => {
     const name = event.target.name;
@@ -35,6 +45,13 @@ const LoginPopup = ({ setShowLogin }) => {
     if (response.data.success) {
       setToken(response.data.token);
       localStorage.setItem("token", response.data.token);
+
+      if (response.data.role === "User") {
+        navigate("/");
+      } else {
+        navigate("/dashboard");
+      }
+
       setShowLogin(false);
     } else {
       alert(response.data.message);
