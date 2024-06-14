@@ -1,0 +1,35 @@
+.options-container {
+  padding: 20px;
+}
+
+.custom-card {
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s;
+  text-align: center;
+}
+
+.custom-card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.card-content {
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  color: #1890ff;
+}
+
+.ant-modal-title {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.ant-table-thead > tr > th {
+  background-color: #fafafa;
+  font-weight: bold;
+}
+
+.ant-table-tbody > tr:hover > td {
+  background-color: #e6f7ff;
+}

@@ -2,12 +2,24 @@
 import React, { useContext, useEffect, useState } from "react";
 import "./PlaceOrder.css";
 import { StoreContext } from "../../Context/StoreContext";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { Container } from "@mui/material";
 
 const PlaceOrder = () => {
-  const { getTotalCartAmount, token, food_list, cartItems, url } =
-    useContext(StoreContext);
+  const { token, url } = useContext(StoreContext);
+
+  const location = useLocation();
+
+  const totalAmountData = location.state.getDataFromCart;
+
+  const getTotalCartAmount = () => {
+    let totalAmount = 0;
+    totalAmountData.forEach((item) => {
+      totalAmount += item.product.price * item.quantity;
+    });
+    return totalAmount;
+  };
 
   const [data, setData] = useState({
     firstName: "",
@@ -47,58 +59,121 @@ const PlaceOrder = () => {
       return;
     }
 
-    let orderItems = [];
-    food_list.forEach((item) => {
-      if (cartItems[item._id] > 0) {
-        let itemInfo = { ...item, quantity: cartItems[item._id] };
-        orderItems.push(itemInfo);
-      }
-    });
+    const orderItems = totalAmountData.map((item) => ({
+      ...item.product,
+      quantity: item.quantity,
+    }));
+
+    const deliveryFee = getTotalCartAmount() === 0 ? 0 : 2;
 
     let orderData = {
       address: data,
       items: orderItems,
-      amount: getTotalCartAmount() + 100,
+      amount: getTotalCartAmount() + deliveryFee,
     };
 
-    const orderDataAmount = orderData.amount;
+    try {
+      const {
+        data: { key },
+      } = await axios.get(url + "/api/getkey", {
+        headers: { Authorization: { token } },
+      });
 
-    const {
-      data: { key },
-    } = await axios.get("http://www.localhost:4000/api/getkey");
-    
-    const {
-      data: { order },
-    } = await axios.post(url + "/api/payment/checkout", {
-      orderDataAmount,
-    });
+      const checkoutHandler = async (total) => {
+        try {
+          const response = await fetch(`${url}/api/payment/checkout`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: token,
+            },
+            body: JSON.stringify({ orderDataAmount: orderData.amount }),
+          });
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const data = await response.json();
+          return data.data.id;
+        } catch (error) {
+          console.error("Error during checkout:", error);
+        }
+      };
 
-    const options = {
-      key: key,
-      amount: orderDataAmount,
-      currency: "INR",
-      name: "Tomato",
-      description: "Tutorial of RazorPay",
-      image: "https://avatars.githubusercontent.com/u/25058652?v=4",
-      order_id: order?.id,
-      callback_url: url + "/api/payment/paymentverification",
-      prefill: {
-        name: "Gaurav Kumar",
-        email: "gaurav.kumar@example.com",
-        contact: "9999999999",
-      },
-      notes: {
-        address: "Razorpay Corporate Office",
-      },
-      theme: {
-        color: "#121212",
-      },
-    };
-    const razor = new window.Razorpay(options);
-    razor.open();
+      const order_id = await checkoutHandler(orderData.amount);
+
+      if (!order_id) {
+        console.error("Order ID not received");
+        return;
+      }
+
+      const options = {
+        key: key,
+        amount: orderData.amount * 100,
+        currency: "INR",
+        name: "Tomato",
+        description: "Tutorial of RazorPay",
+        image: "https://avatars.githubusercontent.com/u/25058652?v=4",
+        order_id: order_id,
+        callback_url: url + "/api/payment/paymentverification",
+        prefill: {
+          name: data.firstName + " " + data.lastName,
+          email: data.email,
+          contact: data.phone,
+        },
+        notes: {
+          address:
+            data.street +
+            ", " +
+            data.city +
+            ", " +
+            data.state +
+            ", " +
+            data.zipcode +
+            ", " +
+            data.country,
+        },
+        theme: {
+          color: "#121212",
+        },
+        handler: async (response) => {
+          try {
+            const verificationResponse = await fetch(
+              url + "/api/payment/paymentverification",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: token,
+                },
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  orderData: orderData,
+                }),
+              }
+            );
+            if (verificationResponse.ok) {
+              navigate("/");
+            } else {
+              throw new Error("Payment verification failed");
+            }
+          } catch (error) {
+            console.error("Payment verification failed:", error);
+            alert("Payment verification failed. Please try again.");
+          }
+        },
+      };
+      const razor = new window.Razorpay(options);
+      razor.open();
+    } catch (error) {
+      console.error("Error creating order: ", error);
+    }
   };
 
   return (
+    <>
+    <Container maxWidth="lg">
     <form onSubmit={placeOrder} className="place-order">
       <div className="place-order-left">
         <p className="title">Delivery Information</p>
@@ -206,6 +281,8 @@ const PlaceOrder = () => {
         </div>
       </div>
     </form>
+    </Container>
+    </>
   );
 };
 

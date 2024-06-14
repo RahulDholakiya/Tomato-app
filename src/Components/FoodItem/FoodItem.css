@@ -15,7 +15,8 @@
 }
 .food-item-name-rating {
   display: flex;
-  justify-content: space-between;
+  /* justify-content: space-between; */
+  flex-direction: column;
   align-items: center;
   margin-bottom: 10px;
 }
@@ -60,4 +61,8 @@
 }
 .food-item-counter img {
   width: 30px;
+}
+.food-item-rating{
+  display: flex;
+  align-items: center;
 }

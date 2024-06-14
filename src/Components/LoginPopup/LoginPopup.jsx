@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import "./LoginPopup.css";
-import { assets } from "../../Assets/assets";
 import { useContext } from "react";
 import { StoreContext } from "../../Context/StoreContext";
 import axios from "axios";
@@ -8,13 +7,14 @@ import { useNavigate } from "react-router-dom";
 
 const LoginPopup = ({ setShowLogin }) => {
   const [currState, setCurrState] = useState("Login");
+
   const [data, setData] = useState({
     name: "",
     email: "",
     password: "",
   });
 
-  const { url, setToken } = useContext(StoreContext);
+  const { url, setToken, setHeaderShow } = useContext(StoreContext);
 
   const navigate = useNavigate();
 
@@ -23,7 +23,8 @@ const LoginPopup = ({ setShowLogin }) => {
     if (token) {
       setToken(token);
     }
-  }, [setToken]);
+    setHeaderShow(false);
+  }, [setToken, setHeaderShow, navigate]);
 
   const onChangeHandler = (event) => {
     const name = event.target.name;
@@ -33,25 +34,27 @@ const LoginPopup = ({ setShowLogin }) => {
 
   const onLogin = async (event) => {
     event.preventDefault();
-    let newUrl = url;
-    if (currState === "Login") {
-      newUrl += "/api/user/login";
-    } else {
-      newUrl += "/api/user/register";
-    }
 
-    const response = await axios.post(newUrl, data);
+    let endpoint =
+      currState === "Login" ? "/api/user/login" : "/api/user/register";
+    const response = await axios.post(`${url}${endpoint}`, data);
 
     if (response.data.success) {
       setToken(response.data.token);
       localStorage.setItem("token", response.data.token);
 
-      if (response.data.role === "User") {
-        navigate("/");
+      if (currState === "Login") {
+        if (response.data.role === "User") {
+          setHeaderShow(true);
+          navigate("/");
+        } else {
+          setHeaderShow(false);
+          navigate("/admin/option");
+        }
       } else {
-        navigate("/dashboard");
+        setHeaderShow(true);
+        navigate("/");
       }
-
       setShowLogin(false);
     } else {
       alert(response.data.message);
@@ -63,16 +66,9 @@ const LoginPopup = ({ setShowLogin }) => {
       <form className="login-popup-container" onSubmit={onLogin}>
         <div className="login-popup-title">
           <h2>{currState}</h2>
-          <img
-            onClick={() => setShowLogin(false)}
-            src={assets.cross_icon}
-            alt=""
-          />
         </div>
         <div className="login-popup-inputs">
-          {currState === "Login" ? (
-            <></>
-          ) : (
+          {currState !== "Login" && (
             <input
               name="name"
               onChange={onChangeHandler}
@@ -103,7 +99,7 @@ const LoginPopup = ({ setShowLogin }) => {
           {currState === "Sign Up" ? "Create account" : "Login"}
         </button>
         <div className="login-popup-condition">
-          <input type="checkbox" required />
+          <input type="checkbox" />
           <p>By continuing, i agree to the terms of use & privacy policy.</p>
         </div>
         {currState === "Login" ? (
@@ -123,3 +119,4 @@ const LoginPopup = ({ setShowLogin }) => {
 };
 
 export default LoginPopup;
+
