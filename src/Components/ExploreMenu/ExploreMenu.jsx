@@ -1,8 +1,34 @@
-import React from "react";
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useContext, useEffect, useState } from "react";
 import "./ExploreMenu.css";
-import { menu_list } from "../../Assets/assets";
+import { StoreContext } from "../../Context/StoreContext";
+import axios from "axios";
 
-const ExploreMenu = ({ category, setCategory }) => {
+const ExploreMenu = () => {
+  const { category, setCategory, url } = useContext(StoreContext);
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get(url + "/api/category/allcategory");
+      if (response.data.success) {
+        setCategories(response.data.categories);
+      } else {
+        console.error("Error fetching categories:", response.data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+
+  const getImageUrl = (filename) => {
+    return `${url}/images/${filename}`;
+  };
+
   return (
     <div className="explore-menu" id="explore-menu">
       <h1>Explore Our Menu</h1>
@@ -13,26 +39,26 @@ const ExploreMenu = ({ category, setCategory }) => {
         a time.
       </p>
       <div className="explore-menu-list">
-        {menu_list.map((item, index) => {
-          return (
-            <div
-              onClick={() =>
-                setCategory((prev) =>
-                  prev === item.menu_name ? "All" : item.menu_name
-                )
-              }
-              key={index}
-              className="explore-menu-list-item"
-            >
-              <img
-                className={category === item.menu_name ? "active" : ""}
-                src={item.menu_image}
-                alt=""
-              />
-              <p>{item.menu_name}</p>
-            </div>
-          );
-        })}
+        {categories.map((categoryItem) => (
+          <div
+            key={categoryItem._id}
+            onClick={() =>
+              setCategory((prev) =>
+                prev === categoryItem.categoryName
+                  ? "All"
+                  : categoryItem.categoryName
+              )
+            }
+            className="explore-menu-list-item"
+          >
+            <img
+              className={category === categoryItem.categoryName ? "active" : ""}
+              src={getImageUrl(categoryItem.image)}
+              alt={categoryItem.categoryName}
+            />
+            <p>{categoryItem.categoryName}</p>
+          </div>
+        ))}
       </div>
       <hr />
     </div>

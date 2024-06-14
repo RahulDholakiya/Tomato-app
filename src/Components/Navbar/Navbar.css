@@ -54,7 +54,7 @@
 .nav-profile-dropdown {
   position: absolute;
   display: none;
-  right: 10%;
+  right: 1%;
   z-index: 1;
 }
 .navbar-profile:hover .nav-profile-dropdown {

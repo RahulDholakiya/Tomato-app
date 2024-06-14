@@ -1,31 +1,70 @@
-import React, { useContext } from "react";
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useContext, useEffect, useState } from "react";
 import "./Cart.css";
 import { StoreContext } from "../../Context/StoreContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import axios from "axios";
+import { Container } from "@mui/material";
 
 const Cart = () => {
-  const {
-    cartItems,
-    food_list,
-    getTotalCartAmount,
-    url,
-    token,
-    // removeFromCart,
-  } = useContext(StoreContext);
-  // console.log(cartItems);
+  const [getDataFromCart, setGetDataFromCart] = useState([]);
+  const { url, token } = useContext(StoreContext);
 
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (token) {
+      getCart();
+    }
+  }, [token]);
+
+  const getCart = async () => {
+    try {
+      const response = await axios.post(
+        url + "/api/cart/get",
+        {},
+        { headers: { Authorization: `${token}` } }
+      );
+      setGetDataFromCart(Object.values(response.data.cartData || []));
+    } catch (error) {
+      console.error("get cart error", error);
+    }
+  };
+
   const proceedToCheckout = () => {
     if (token) {
-      navigate("/order");
+      navigate("/order", { state: { getDataFromCart: getDataFromCart } });
     } else {
       toast.error("Please Login");
     }
   };
 
+  const removeFromCart = async (item) => {
+    try {
+      const response = await axios.post(
+        url + "/api/cart/remove",
+        { itemId: item.itemId },
+        { headers: { Authorization: `${token}` } }
+      );
+      setGetDataFromCart(Object.values(response.data.cartData || []));
+    } catch (error) {
+      console.error("Error removing item from cart:", error);
+      toast.error("Failed to remove item from cart");
+    }
+  };
+
+  const getTotalCartAmount = () => {
+    let totalAmount = 0;
+    getDataFromCart.forEach((item) => {
+      totalAmount += item.product?.price * item?.quantity;
+    });
+    return totalAmount;
+  };
+
   return (
+    <>
+    <Container maxWidth="lg">
     <div className="cart">
       <div className="cart-items">
         <div className="cart-items-title">
@@ -38,20 +77,22 @@ const Cart = () => {
         </div>
         <br />
         <hr />
-        {food_list.map((item, index) => {
-          if (cartItems[item._id] > 0) {
-            return (
-              <div className="cart-items-title cart-items-item" key={index}>
-                <img src={url + "/images/" + item.image} alt="" />
-                <p>{item.name}</p>
-                <p>${item.price}</p>
-                <p>{cartItems[item._id]}</p>
-                <p>${item.price * cartItems[item._id]}</p>
-                <p className="cross">x</p>
-              </div>
-            );
-          }
-          return null;
+        {getDataFromCart?.map((item, index) => {
+          return (
+            <div className="cart-items-title cart-items-item" key={index}>
+              <img
+                src={`${url}/images/${item?.product?.image}`}
+                alt={item?.product?.name}
+              />
+              <p>{item?.product?.name}</p>
+              <p>{item?.product?.price}</p>
+              <p>{item?.quantity}</p>
+              <p>${item?.product?.price * item?.quantity}</p>
+              <p onClick={() => removeFromCart(item)} className="cross">
+                x
+              </p>
+            </div>
+          );
         })}
       </div>
       <div className="cart-bottom">
@@ -88,6 +129,8 @@ const Cart = () => {
         </div>
       </div>
     </div>
+    </Container>
+    </>
   );
 };
 

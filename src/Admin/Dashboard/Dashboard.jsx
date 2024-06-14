@@ -1,27 +1,90 @@
-import React from "react";
-import { ToastContainer } from "react-toastify";
-import Navbar from "../../Admin/Components/Navbar/Navbar";
-import Sidebar from "../../Admin/Components/Sidebar/Sidebar";
-import {  Route, Routes } from "react-router-dom";
-import Add from "../Pages/Add/Add";
-import Orders from "../Pages/List/List";
-import List from "../Pages/Orders/Orders";
+import React, { useContext, useEffect, useState } from "react";
+import { StoreContext } from "../../Context/StoreContext";
+import "./Dashboard.css";
+import {
+  DesktopOutlined,
+  FileOutlined,
+  TeamOutlined,
+  PieChartOutlined,
+  AppstoreAddOutlined,
+  RetweetOutlined,
+  WechatOutlined,
+} from "@ant-design/icons";
+import { Layout, Menu, theme } from "antd";
+import { Link, Outlet } from "react-router-dom";
+import Navbar from "../Components/Navbar/Navbar";
+
+const { Content, Sider } = Layout;
+
+function getItem(label, key, icon, children) {
+  return {
+    key,
+    icon,
+    children,
+    label,
+  };
+}
+
+const items = [
+  getItem("Option", "option", <PieChartOutlined />),
+  getItem("Add", "add", <DesktopOutlined />),
+  getItem("Orders", "orders", <TeamOutlined />),
+  getItem("List", "list", <FileOutlined />),
+  getItem("Add Category", "add-category", <AppstoreAddOutlined />),
+  getItem("Review", "review", <RetweetOutlined />),
+  getItem("Superchat", "superchat", <WechatOutlined />),
+];
 
 const Dashboard = () => {
+  const { setHeaderShow } = useContext(StoreContext);
+
+  const [collapsed, setCollapsed] = useState(false);
+
+  const {
+    token: { colorBgContainer, borderRadiusLG },
+  } = theme.useToken();
+
+  useEffect(() => {
+    setHeaderShow(false);
+  }, [setHeaderShow]);
+
   return (
-    <div>
-      <ToastContainer />
+    <>
       <Navbar />
-      <hr />
-      <div className="app-content">
-        <Sidebar />
-          <Routes>
-            <Route path="/add" element={<Add />} />
-            <Route path="/list" element={<List />} />
-            <Route path="/orders" element={<Orders />} />
-          </Routes>
-      </div>
-    </div>
+      <Layout style={{ minHeight: "100vh" }}>
+        <Sider
+          collapsible
+          collapsed={collapsed}
+          onCollapse={(value) => setCollapsed(value)}
+        >
+          <div className="demo-logo-vertical" />
+          <Menu theme="dark" mode="inline">
+            {items.map((item) => (
+              <Menu.Item key={item.key}>
+                <Link to={item.key}>
+                  {item.icon}
+                  <span>{item.label}</span>
+                </Link>
+              </Menu.Item>
+            ))}
+          </Menu>
+        </Sider>
+        <Layout>
+          <Content style={{ margin: "0 16px" }}>
+            <div
+              style={{
+                padding: 24,
+                minHeight: 360,
+                background: colorBgContainer,
+                borderRadius: borderRadiusLG,
+              }}
+            >
+              <Outlet />
+            </div>
+          </Content>
+        </Layout>
+      </Layout>
+    </>
   );
 };
 
