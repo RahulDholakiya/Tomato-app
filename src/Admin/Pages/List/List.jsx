@@ -117,7 +117,7 @@ const List = () => {
       </Container>
       <Modal
         title="Edit Food"
-        visible={modalVisible}
+        open={modalVisible}
         onCancel={() => setModalVisible(false)}
         footer={[
           <Button key="cancel" onClick={() => setModalVisible(false)}>

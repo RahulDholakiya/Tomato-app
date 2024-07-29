@@ -33,7 +33,7 @@
 .chat-container {
   display: flex;
   flex-direction: column;
-  height: 600px;
+  height: 600px !important;
   overflow-y: auto;
 }
 .chat-messages {
@@ -95,9 +95,6 @@
 .item-image {
   object-fit: cover;
 }
-.ant-btn.ant-btn-block {
-  width: 100%;
-}
-.show-questions {
-  margin-bottom: 10px;
+.show-questions button{
+  margin-bottom: 8px;
 }
