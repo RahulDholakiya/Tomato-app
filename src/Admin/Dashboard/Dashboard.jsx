@@ -16,11 +16,11 @@ import Navbar from "../Components/Navbar/Navbar";
 
 const { Content, Sider } = Layout;
 
-function getItem(label, key, icon, children) {
+function getItem(label, key, icon, items) {
   return {
     key,
     icon,
-    children,
+    items,
     label,
   };
 }

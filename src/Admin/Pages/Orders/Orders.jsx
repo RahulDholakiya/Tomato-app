@@ -1,6 +1,7 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useContext, useEffect, useState } from "react";
-import { Table, Button, Select } from "antd";
+import { Table, Button, Select, Modal, Input } from "antd";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { StoreContext } from "../../../Context/StoreContext";
@@ -15,19 +16,31 @@ const Orders = () => {
     outForDelivery: 0,
     delivered: 0,
   });
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedUser, setSelectedUser] = useState({
+    userId: "",
+    username: "",
+  });
+  const [filterStatus, setFilterStatus] = useState("");
+  const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState([]);
 
   const { url } = useContext(StoreContext);
 
   useEffect(() => {
     fetchAllOrders();
-  }, []);
+  }, [filterStatus]);
 
   const fetchAllOrders = async () => {
     try {
       const response = await axios.get(url + "/api/order/list");
       if (response.data.success) {
         const ordersData = response.data.data;
-        setOrders(ordersData);
+        setOrders(
+          filterStatus
+            ? ordersData.filter((order) => order.status === filterStatus)
+            : ordersData
+        );
         calculateSummary(ordersData);
       } else {
         toast.error("Error");
@@ -105,6 +118,21 @@ const Orders = () => {
     }
   };
 
+  const viewChat = (items, record) => {
+    setSelectedUser({
+      userId: record._id,
+      username: record.address?.firstName + " " + record.address?.lastName,
+    });
+    setIsModalVisible(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalVisible(false);
+    setSelectedUser({ userId: "", username: "" });
+  };
+
+  const sendMessage = () => {};
+
   const columns = [
     {
       title: "Items",
@@ -134,20 +162,6 @@ const Orders = () => {
             <span key={index}>
               {item?.name}
               {index < items.length - 1 && ", "}
-            </span>
-          ))}
-        </span>
-      ),
-    },
-    {
-      title: "Item Quantity",
-      dataIndex: "items",
-      key: "itemQuantity",
-      render: (items) => (
-        <span>
-          {items.map((item, index) => (
-            <span key={index}>
-              {item?.quantity}
             </span>
           ))}
         </span>
@@ -224,6 +238,14 @@ const Orders = () => {
         </div>
       ),
     },
+    {
+      title: "View Chat",
+      dataIndex: "view chat",
+      key: "view chat",
+      render: (items, record) => (
+        <Button onClick={() => viewChat(items, record)}>View Chat</Button>
+      ),
+    },
   ];
 
   return (
@@ -232,19 +254,35 @@ const Orders = () => {
         <div className="order add">
           <h3>Order Page</h3>
           <div className="summary-boxes">
-            <div className="summary-box">
+            <div
+              className="summary-box"
+              onClick={() => setFilterStatus("")}
+              style={{ cursor: "pointer" }}
+            >
               <h4>Total Amount</h4>
               <p>${summary.totalAmount.toFixed(2)}</p>
             </div>
-            <div className="summary-box">
+            <div
+              className="summary-box"
+              onClick={() => setFilterStatus("Food Processing")}
+              style={{ cursor: "pointer" }}
+            >
               <h4>Food Processing</h4>
               <p>{summary.foodProcessing}</p>
             </div>
-            <div className="summary-box">
+            <div
+              className="summary-box"
+              onClick={() => setFilterStatus("Out for delivery")}
+              style={{ cursor: "pointer" }}
+            >
               <h4>Out for Delivery</h4>
               <p>{summary.outForDelivery}</p>
             </div>
-            <div className="summary-box">
+            <div
+              className="summary-box"
+              onClick={() => setFilterStatus("Delivered")}
+              style={{ cursor: "pointer" }}
+            >
               <h4>Delivered</h4>
               <p>{summary.delivered}</p>
             </div>
@@ -252,6 +290,40 @@ const Orders = () => {
           <Table columns={columns} dataSource={orders} rowKey="_id" />
         </div>
       </Container>
+      <Modal
+        title="User Chat Details"
+        visible={isModalVisible}
+        onOk={handleModalClose}
+        onCancel={handleModalClose}
+        footer={[
+          <Button key="back" onClick={handleModalClose}>
+            Close
+          </Button>,
+        ]}
+      >
+        <div className="chat-container">
+          <div className="message-list">
+            {messages.map((msg, index) => (
+              <div
+                key={index}
+                className={`message ${msg.sentByUser ? "sent" : "received"}`}
+              >
+                <span className="message-content">{msg.content}</span>
+              </div>
+            ))}
+          </div>
+          <div className="input-container">
+            <Input
+              placeholder="Type your message here..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
+            <Button type="primary" onClick={sendMessage}>
+              Send
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 };

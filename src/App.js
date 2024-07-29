@@ -24,7 +24,7 @@ import OrderDetailsPage from "./Pages/OrderDetailsPage/OrderDetailsPage";
 
 function App() {
   const [showLogin, setShowLogin] = useState(false);
-  const { headerShow, url } = useContext(StoreContext);
+  const { headerShow } = useContext(StoreContext);
 
   return (
     <>
@@ -45,12 +45,12 @@ function App() {
         />
         <Route path="/admin/*" element={<Dashboard />}>
           <Route path="add" element={<Add />} />
-          <Route path="list" element={<List url={url} />} />
-          <Route path="orders" element={<Orders url={url} />} />
-          <Route path="option" element={<Options url={url} />} />
-          <Route path="add-category" element={<AddCategory url={url} />} />
-          <Route path="review" element={<Review />} url={url} />
-          <Route path="superchat" element={<SuperChat />} url={url} />
+          <Route path="list" element={<List />} />
+          <Route path="orders" element={<Orders />} />
+          <Route path="option" element={<Options />} />
+          <Route path="add-category" element={<AddCategory />} />
+          <Route path="review" element={<Review />} />
+          <Route path="superchat" element={<SuperChat />} />
         </Route>
       </Routes>
       {headerShow && <Footer />}

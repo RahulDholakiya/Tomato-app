@@ -1,13 +1,16 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import axios from "axios";
 import { Card, Col, Modal, Row, Table } from "antd";
 import "./Options.css";
+import { StoreContext } from "../../../Context/StoreContext";
 
-const Options = ({ url }) => {
+const Options = () => {
   const [stats, setStats] = useState({});
   const [modalVisible, setModalVisible] = useState(false);
   const [categoryData, setCategoryData] = useState([]);
+
+  const { url } = useContext(StoreContext);
 
   useEffect(() => {
     fetchStats();
@@ -61,7 +64,7 @@ const Options = ({ url }) => {
 
   return (
     <div className="options-container">
-      <Row gutter={[16,16]}>
+      <Row gutter={[16, 16]}>
         <Col span={8}>
           <Card className="custom-card" title="Total Users">
             <div className="card-content">{stats.userCount}</div>
@@ -95,7 +98,7 @@ const Options = ({ url }) => {
       </Row>
       <Modal
         title="Category Data"
-        visible={modalVisible}
+        open={modalVisible}
         onCancel={() => setModalVisible(false)}
         footer={null}
       >
